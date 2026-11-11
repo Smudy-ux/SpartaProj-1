@@ -123,15 +123,7 @@ public class SpartansSteps extends BaseTest {
 
     @Then("the spartan should be created with a generated id")
     public void theSpartanShouldBeCreatedWithAGeneratedId() {
-        List<SpartanItem> all = Arrays.asList(given()
-                .spec(authRequestSpec())
-                .get(SPARTANS_ENDPOINT)
-                .as(SpartanItem[].class));
-
-        SpartanItem created = all.stream()
-                .filter(s -> newSpartan.getLastName().equals(s.getLastName()))
-                .findFirst()
-                .orElse(null);
+        SpartanItem created = findSpartanByLastName(newSpartan.getLastName());
 
         MatcherAssert.assertThat("new spartan should be in the list", created, notNullValue());
         context.createdSpartanId = created.getId();
@@ -211,6 +203,72 @@ public class SpartansSteps extends BaseTest {
                 hasProperty("rel", equalTo("course")),
                 hasProperty("method", equalTo("GET")),
                 hasProperty("href", equalTo("/api/Courses/" + courseId)))));
+    }
+
+    @Given("an existing spartan")
+    public void anExistingSpartan() {
+        iHaveAValidNewSpartan();
+        given()
+                .spec(authRequestSpec())
+                .body(newSpartan)
+                .post(SPARTANS_ENDPOINT);
+
+        SpartanItem created = findSpartanByLastName(newSpartan.getLastName());
+        MatcherAssert.assertThat("test spartan should have been created", created, notNullValue());
+        context.createdSpartanId = created.getId();
+    }
+
+    @When("I delete the spartan")
+    public void iDeleteTheSpartan() {
+        context.response = given()
+                .spec(authRequestSpec())
+                .when()
+                .delete(SPARTANS_ENDPOINT + "/" + context.createdSpartanId);
+    }
+
+    @When("I delete the spartan without a token")
+    public void iDeleteTheSpartanWithoutAToken() {
+        context.response = given()
+                .spec(requestSpec())
+                .when()
+                .delete(SPARTANS_ENDPOINT + "/" + context.createdSpartanId);
+    }
+
+    @When("I delete the spartan with id {word}")
+    public void iDeleteTheSpartanWithId(String id) {
+        context.response = given()
+                .spec(authRequestSpec())
+                .when()
+                .delete(SPARTANS_ENDPOINT + "/" + id);
+    }
+
+    @And("the spartan should no longer exist")
+    public void theSpartanShouldNoLongerExist() {
+        // GET by id returns 204 for an unknown id (see BUG-001)
+        given()
+                .spec(authRequestSpec())
+                .get(SPARTANS_ENDPOINT + "/" + context.createdSpartanId)
+                .then()
+                .statusCode(204);
+
+        MatcherAssert.assertThat(findSpartanByLastName(newSpartan.getLastName()), nullValue());
+    }
+
+    @And("the spartan should still exist")
+    public void theSpartanShouldStillExist() {
+        MatcherAssert.assertThat(findSpartanByLastName(newSpartan.getLastName()), notNullValue());
+    }
+
+    private SpartanItem findSpartanByLastName(String lastName) {
+        List<SpartanItem> all = Arrays.asList(given()
+                .spec(authRequestSpec())
+                .get(SPARTANS_ENDPOINT)
+                .as(SpartanItem[].class));
+
+        return all.stream()
+                .filter(s -> lastName.equals(s.getLastName()))
+                .findFirst()
+                .orElse(null);
     }
 
     @After

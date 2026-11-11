@@ -81,3 +81,36 @@ Feature: Spartans
   Scenario: Get a spartan without a token
     When I request the spartan with id 1 without a token
     Then the response status should be 401
+
+  Scenario: Delete a spartan
+    Given I am logged in
+    And an existing spartan
+    When I delete the spartan
+    Then the response status should be 204
+    And the response body should be empty
+    And the spartan should no longer exist
+
+  Scenario: Delete the same spartan twice
+    Given I am logged in
+    And an existing spartan
+    And I delete the spartan
+    When I delete the spartan
+    Then the response status should be 404
+
+  Scenario: Delete a spartan that does not exist
+    Given I am logged in
+    When I delete the spartan with id 999
+    Then the response status should be 404
+    And the response should contain "Not Found"
+
+  Scenario: Delete a spartan with an invalid id
+    Given I am logged in
+    When I delete the spartan with id abc
+    Then the response status should be 400
+    And the response should contain "The value 'abc' is not valid."
+
+  Scenario: Delete a spartan without a token
+    Given an existing spartan
+    When I delete the spartan without a token
+    Then the response status should be 401
+    And the spartan should still exist
