@@ -114,3 +114,52 @@ Feature: Spartans
     When I delete the spartan without a token
     Then the response status should be 401
     And the spartan should still exist
+
+  Scenario: Update a spartan's details
+    Given I am logged in
+    And an existing spartan
+    When I update the spartan with first name "Updated", university "University of Updates", degree "Quality Assurance" and graduated true
+    Then the response status should be 204
+    And the response body should be empty
+    And the spartan should now have first name "Updated", university "University of Updates", degree "Quality Assurance" and graduated true
+
+  Scenario: Move a spartan to another course
+    Given I am logged in
+    And an existing spartan
+    When I move the spartan to course "TECH 301"
+    Then the response status should be 204
+    And the spartan should now be on course "TECH 301" in stream "Java Dev" with a link to course 2
+
+  Scenario: Updating a spartan with an invalid name is rejected
+    Given I am logged in
+    And an existing spartan
+    When I update the spartan with first name "Tom"
+    Then the response status should be 400
+    And the response should contain "The field FirstName must be a string with a minimum length of 6"
+    And the spartan should be unchanged
+
+  Scenario: Updating a spartan when the body id does not match the URL id is rejected
+    Given I am logged in
+    And an existing spartan
+    When I update the spartan with id 1 in the body
+    Then the response status should be 400
+    And the spartan should be unchanged
+
+  Scenario: Updating a spartan without an id in the body is rejected
+    Given I am logged in
+    And an existing spartan
+    When I update the spartan without an id in the body
+    Then the response status should be 400
+    And the spartan should be unchanged
+
+  Scenario: Update a spartan that does not exist
+    Given I am logged in
+    When I update a spartan with id 999 that does not exist
+    Then the response status should be 404
+    And the response should contain "Not Found"
+
+  Scenario: Update a spartan without a token
+    Given an existing spartan
+    When I update the spartan without a token
+    Then the response status should be 401
+    And the spartan should be unchanged

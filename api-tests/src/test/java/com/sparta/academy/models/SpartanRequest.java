@@ -6,6 +6,9 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class SpartanRequest {
 
+	@JsonProperty("id")
+	private Integer id;
+
 	@JsonProperty("firstName")
 	private String firstName;
 
@@ -34,6 +37,14 @@ public class SpartanRequest {
 		this.graduated = graduated;
 	}
 
+	public Integer getId() {
+		return id;
+	}
+
+	public void setId(Integer id) {
+		this.id = id;
+	}
+
 	public String getFirstName() {
 		return firstName;
 	}
@@ -48,6 +59,22 @@ public class SpartanRequest {
 
 	public String getDegree() {
 		return degree;
+	}
+
+	public void setFirstName(String firstName) {
+		this.firstName = firstName;
+	}
+
+	public void setUniversity(String university) {
+		this.university = university;
+	}
+
+	public void setDegree(String degree) {
+		this.degree = degree;
+	}
+
+	public void setGraduated(boolean graduated) {
+		this.graduated = graduated;
 	}
 
 	public CourseRequest getCourse() {

@@ -35,10 +35,14 @@ public class CourseRequest {
 		this.endDate = endDate;
 	}
 
-	/** Existing course id 1 (TECH 300, C# Dev). */
 	public static CourseRequest tech300() {
 		return new CourseRequest(1, "TECH 300", new StreamRequest(1, "C# Dev"),
 				"Phil Windridge", "2023-03-01T00:00:00", "2023-05-01T00:00:00");
+	}
+
+	public static CourseRequest tech301() {
+		return new CourseRequest(2, "TECH 301", new StreamRequest(2, "Java Dev"),
+				"Catherine French", "2023-04-01T00:00:00", "2023-06-01T00:00:00");
 	}
 
 	public int getId() {

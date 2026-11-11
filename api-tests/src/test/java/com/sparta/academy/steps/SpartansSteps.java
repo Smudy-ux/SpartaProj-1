@@ -259,6 +259,108 @@ public class SpartansSteps extends BaseTest {
         MatcherAssert.assertThat(findSpartanByLastName(newSpartan.getLastName()), notNullValue());
     }
 
+    @When("I update the spartan with first name {string}, university {string}, degree {string} and graduated {word}")
+    public void iUpdateTheSpartan(String firstName, String university, String degree, String graduated) {
+        newSpartan.setId(context.createdSpartanId);
+        newSpartan.setFirstName(firstName);
+        newSpartan.setUniversity(university);
+        newSpartan.setDegree(degree);
+        newSpartan.setGraduated(Boolean.parseBoolean(graduated));
+        sendPut(String.valueOf(context.createdSpartanId), true);
+    }
+
+    @When("I move the spartan to course {string}")
+    public void iMoveTheSpartanToCourse(String course) {
+        newSpartan.setId(context.createdSpartanId);
+        newSpartan.setCourse(switch (course) {
+            case "TECH 300" -> CourseRequest.tech300();
+            case "TECH 301" -> CourseRequest.tech301();
+            default -> throw new IllegalArgumentException("No test course for: " + course);
+        });
+        sendPut(String.valueOf(context.createdSpartanId), true);
+    }
+
+    @When("I update the spartan with first name {string}")
+    public void iUpdateTheSpartanWithFirstName(String firstName) {
+        newSpartan.setId(context.createdSpartanId);
+        newSpartan.setFirstName(firstName);
+        sendPut(String.valueOf(context.createdSpartanId), true);
+    }
+
+    @When("I update the spartan with id {int} in the body")
+    public void iUpdateTheSpartanWithIdInTheBody(int bodyId) {
+        newSpartan.setId(bodyId);
+        newSpartan.setFirstName("Updated");
+        sendPut(String.valueOf(context.createdSpartanId), true);
+    }
+
+    @When("I update the spartan without an id in the body")
+    public void iUpdateTheSpartanWithoutAnIdInTheBody() {
+        newSpartan.setId(null);
+        newSpartan.setFirstName("Updated");
+        sendPut(String.valueOf(context.createdSpartanId), true);
+    }
+
+    @When("I update a spartan with id {int} that does not exist")
+    public void iUpdateASpartanThatDoesNotExist(int id) {
+        iHaveAValidNewSpartan();
+        newSpartan.setId(id);
+        sendPut(String.valueOf(id), true);
+    }
+
+    @When("I update the spartan without a token")
+    public void iUpdateTheSpartanWithoutAToken() {
+        newSpartan.setId(context.createdSpartanId);
+        newSpartan.setFirstName("Updated");
+        sendPut(String.valueOf(context.createdSpartanId), false);
+    }
+
+    @And("the spartan should now have first name {string}, university {string}, degree {string} and graduated {word}")
+    public void theSpartanShouldNowHave(String firstName, String university, String degree, String graduated) {
+        MatcherAssert.assertThat(fetchCreatedSpartan(), allOf(
+                hasProperty("id", equalTo(context.createdSpartanId)),
+                hasProperty("firstName", equalTo(firstName)),
+                hasProperty("lastName", equalTo(newSpartan.getLastName())),
+                hasProperty("university", equalTo(university)),
+                hasProperty("degree", equalTo(degree)),
+                hasProperty("graduated", is(Boolean.parseBoolean(graduated)))));
+    }
+
+    @And("the spartan should now be on course {string} in stream {string} with a link to course {int}")
+    public void theSpartanShouldNowBeOnCourse(String course, String stream, int courseId) {
+        SpartanItem spartan = fetchCreatedSpartan();
+
+        MatcherAssert.assertThat(spartan, allOf(
+                hasProperty("course", equalTo(course)),
+                hasProperty("stream", equalTo(stream))));
+        MatcherAssert.assertThat(spartan.getLinks(), hasItem(allOf(
+                hasProperty("rel", equalTo("course")),
+                hasProperty("href", equalTo("/api/Courses/" + courseId)))));
+    }
+
+    @And("the spartan should be unchanged")
+    public void theSpartanShouldBeUnchanged() {
+        MatcherAssert.assertThat(fetchCreatedSpartan(), allOf(
+                hasProperty("firstName", equalTo("Testing")),
+                hasProperty("university", equalTo("University of Testing")),
+                hasProperty("degree", equalTo("Software Testing"))));
+    }
+
+    private void sendPut(String urlId, boolean withToken) {
+        context.response = given()
+                .spec(withToken ? authRequestSpec() : requestSpec())
+                .body(newSpartan)
+                .when()
+                .put(SPARTANS_ENDPOINT + "/" + urlId);
+    }
+
+    private SpartanItem fetchCreatedSpartan() {
+        return given()
+                .spec(authRequestSpec())
+                .get(SPARTANS_ENDPOINT + "/" + context.createdSpartanId)
+                .as(SpartanItem.class);
+    }
+
     private SpartanItem findSpartanByLastName(String lastName) {
         List<SpartanItem> all = Arrays.asList(given()
                 .spec(authRequestSpec())
