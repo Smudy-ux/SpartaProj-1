@@ -4,7 +4,6 @@ import com.sparta.academy.BaseTest;
 import io.cucumber.java.en.Given;
 import io.cucumber.java.en.Then;
 import io.cucumber.java.en.When;
-import io.restassured.response.Response;
 import org.hamcrest.MatcherAssert;
 
 import com.sparta.academy.models.LoginRequest;
@@ -16,7 +15,11 @@ public class AuthSteps extends BaseTest {
 
     private String username;
     private String password;
-    private Response response;
+    private final TestContext context;
+
+    public AuthSteps(TestContext context) {
+        this.context = context;
+    }
 
     @Given("I have valid credentials")
     public void iHaveValidCredentials() {
@@ -32,7 +35,7 @@ public class AuthSteps extends BaseTest {
 
     @When("I send a login request")
     public void iSendALoginRequest() {
-        response = given()
+        context.response = given()
                 .spec(requestSpec())
                 .body(new LoginRequest(username, password))
                 .post(LOGIN_ENDPOINT);
@@ -40,18 +43,18 @@ public class AuthSteps extends BaseTest {
 
     @Then("the response status should be {int}")
     public void theResponseStatusShouldBe(int status) {
-        MatcherAssert.assertThat(response.statusCode(), is(status));
+        MatcherAssert.assertThat(context.response.statusCode(), is(status));
     }
 
     @Then("the response should contain a valid token")
     public void theResponseShouldContainAValidToken() {
-        String token = response.jsonPath().getString("token");
+        String token = context.response.jsonPath().getString("token");
         MatcherAssert.assertThat(token, not(emptyOrNullString()));
         MatcherAssert.assertThat(token, matchesRegex("^.+\\..+\\..+$"));
     }
 
     @Then("the response should contain {string}")
     public void theResponseShouldContain(String text) {
-        MatcherAssert.assertThat(response.asString(), containsString(text));
+        MatcherAssert.assertThat(context.response.asString(), containsString(text));
     }
 }
