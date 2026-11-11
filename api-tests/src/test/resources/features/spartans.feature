@@ -18,8 +18,6 @@ Feature: Spartans
       | John      | Lennon    | TECH 301 | Java Dev |
       | Noel      | Gallagher | DATA 304 | Data     |
 
-  # NOTE: POST currently returns 500 even though the spartan is created
-  # (CreatedAtAction points to a non-existent "GetSupplier" action). Should be 201.
   Scenario: Create a new spartan
     Given I am logged in
     And I have a valid new spartan
@@ -52,4 +50,34 @@ Feature: Spartans
   Scenario: Creating a spartan without a token is rejected
     Given I have a valid new spartan
     When I create the spartan without a token
+    Then the response status should be 401
+
+  Scenario Outline: Get a specific spartan by id
+    Given I am logged in
+    When I request the spartan with id <id>
+    Then the response status should be 200
+    And the spartan should have id <id>, name "<firstName>" "<lastName>", university "<university>", course "<course>" and stream "<stream>"
+    And the spartan should have self, update and delete links to itself
+    And the spartan's course link should point to course <courseId>
+
+    Examples:
+      | id | firstName | lastName  | university                 | course   | stream   | courseId |
+      | 1  | Sparty    | McFly     | University of Rome         | TECH 300 | C# Dev   | 1        |
+      | 14 | Joan      | Clarke    | University of Camrbridge   | TECH 301 | Java Dev | 2        |
+      | 33 | Noel      | Gallagher | University of Manchester   | DATA 304 | Data     | 5        |
+
+  Scenario: Get a spartan that does not exist
+    Given I am logged in
+    When I request the spartan with id 999
+    Then the response status should be 204
+    And the response body should be empty
+
+  Scenario: Get a spartan with an invalid id
+    Given I am logged in
+    When I request the spartan with id abc
+    Then the response status should be 400
+    And the response should contain "The value 'abc' is not valid."
+
+  Scenario: Get a spartan without a token
+    When I request the spartan with id 1 without a token
     Then the response status should be 401

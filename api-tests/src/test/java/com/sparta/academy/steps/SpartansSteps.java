@@ -152,6 +152,67 @@ public class SpartansSteps extends BaseTest {
                 hasProperty("graduated", is(false))));
     }
 
+    @When("I request the spartan with id {word}")
+    public void iRequestTheSpartanWithId(String id) {
+        context.response = given()
+                .spec(authRequestSpec())
+                .when()
+                .get(SPARTANS_ENDPOINT + "/" + id);
+    }
+
+    @When("I request the spartan with id {word} without a token")
+    public void iRequestTheSpartanWithIdWithoutAToken(String id) {
+        context.response = given()
+                .spec(requestSpec())
+                .when()
+                .get(SPARTANS_ENDPOINT + "/" + id);
+    }
+
+    @And("the spartan should have id {int}, name {string} {string}, university {string}, course {string} and stream {string}")
+    public void theSpartanShouldHave(int id, String firstName, String lastName,
+                                     String university, String course, String stream) {
+        SpartanItem spartan = context.response.as(SpartanItem.class);
+
+        MatcherAssert.assertThat(spartan, allOf(
+                hasProperty("id", equalTo(id)),
+                hasProperty("firstName", equalTo(firstName)),
+                hasProperty("lastName", equalTo(lastName)),
+                hasProperty("university", equalTo(university)),
+                hasProperty("degree", not(emptyOrNullString())),
+                hasProperty("course", equalTo(course)),
+                hasProperty("stream", equalTo(stream))));
+    }
+
+    @And("the spartan should have self, update and delete links to itself")
+    public void theSpartanShouldHaveLinksToItself() {
+        SpartanItem spartan = context.response.as(SpartanItem.class);
+        String selfHref = "/api/Spartans/" + spartan.getId();
+
+        MatcherAssert.assertThat(spartan.getLinks(), allOf(
+                hasItem(allOf(
+                        hasProperty("rel", equalTo("self")),
+                        hasProperty("method", equalTo("GET")),
+                        hasProperty("href", equalTo(selfHref)))),
+                hasItem(allOf(
+                        hasProperty("rel", equalTo("update_spartan")),
+                        hasProperty("method", equalTo("PUT")),
+                        hasProperty("href", equalTo(selfHref)))),
+                hasItem(allOf(
+                        hasProperty("rel", equalTo("delete_spartan")),
+                        hasProperty("method", equalTo("DELETE")),
+                        hasProperty("href", equalTo(selfHref))))));
+    }
+
+    @And("the spartan's course link should point to course {int}")
+    public void theSpartansCourseLinkShouldPointToCourse(int courseId) {
+        SpartanItem spartan = context.response.as(SpartanItem.class);
+
+        MatcherAssert.assertThat(spartan.getLinks(), hasItem(allOf(
+                hasProperty("rel", equalTo("course")),
+                hasProperty("method", equalTo("GET")),
+                hasProperty("href", equalTo("/api/Courses/" + courseId)))));
+    }
+
     @After
     public void deleteCreatedSpartan() {
         if (context.createdSpartanId != null) {
