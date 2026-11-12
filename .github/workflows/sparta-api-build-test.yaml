@@ -1,0 +1,50 @@
+name: Sparta Api build and test
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  build:
+    name: Build
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Build the Docker image
+        run: "docker build -t spartaacademyapi SpartaAcademyAPI"
+
+      - name: Run the Docker container
+        run: "docker run -d --name sparta-api -p 8080:8080 spartaacademyapi"
+
+      - name: Wait for API to be ready
+        run: |
+          for i in $(seq 1 30); do
+            curl -s -o /dev/null http://localhost:8080/api/courses && echo "API is up" && exit 0
+            echo "Waiting... ($i)"; sleep 2
+          done
+          echo "API did not start"; exit 1
+
+      - name: Set up Java 21
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+          cache: maven
+
+      - name: Tests
+        working-directory: api-tests
+        run: "mvn test"
+
+      - name: Show container logs
+        if: failure()
+        run: docker logs sparta-api
+
+      - name: Upload test reports
+        uses: actions/upload-artifact@4
+        with:
+          name: test-report
+          path:  api-tests/target/surefire-reports/
