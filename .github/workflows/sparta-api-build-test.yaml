@@ -4,6 +4,9 @@ on:
   push:
     branches:
       - main
+  pull_request:
+    branches:
+      - main
 
 jobs:
   build:
@@ -44,7 +47,7 @@ jobs:
         run: docker logs sparta-api
 
       - name: Upload test reports
-        uses: actions/upload-artifact@3
+        uses: actions/upload-artifact@v4
         with:
           name: test-report
           path:  api-tests/target/surefire-reports/
